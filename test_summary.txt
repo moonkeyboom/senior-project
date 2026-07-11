@@ -1,0 +1,15 @@
+# CPD Algorithm Test Summary
+
+This table compares the Exhaustive (Ground Truth Optimal) approach against the DP-based heuristic.
+
+       Test Case  Exhaustive (Fixed k)  DP (Fixed k)  Exhaustive (Overall)  DP (Overall)
+     tc1_uniform              0.995548      0.995548              1.000000      1.000000
+     tc2_bimodal              0.021382      0.000000              0.318932      0.318932
+tc3_outlier_high              0.006142      0.000000              0.150311      0.149953
+ tc4_outlier_low              0.006529      0.000000              0.139870      0.126320
+      tc5_skewed              0.058888      0.000000              0.483622      0.266264
+      tc6_normal              0.077252      0.000000              0.405892      0.197125
+      tc7_narrow              0.000000      0.000000              0.959300      0.887092
+     tc8_small_n              0.000000      0.000000              0.086158      0.086158
+ tc9_five_groups              0.092696      0.000000              0.672087      0.124280
+       tc10_gaps              0.047461      0.000000              0.414214      0.414214
