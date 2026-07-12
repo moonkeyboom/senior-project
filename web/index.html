@@ -1,13 +1,134 @@
 <!doctype html>
-<html lang="en">
+<html lang="th">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>web</title>
+    <title>ระบบตัดเกรดข้อมูล (CPD)</title>
   </head>
   <body>
-    <div id="app"></div>
+    <div id="app">
+      <div class="glass-container">
+        <!-- Input Section -->
+        <div class="card input-section" id="inputSection">
+          <h1>โปรแกรมตัดเกรดข้อมูล</h1>
+          <p class="subtitle">อัปโหลดคะแนนเพื่อคำนวณการตัดเกรด (CPD) ที่ดีที่สุด</p>
+          
+          <form id="cpdForm">
+            <div class="form-group">
+              <label for="fileUpload">อัปโหลดชุดข้อมูล (รองรับไฟล์ CSV หรือ XLSX)</label>
+              
+              <details class="help-details">
+                <summary>ดูคำแนะนำรูปแบบไฟล์และตัวอย่าง</summary>
+                <div class="help-content">
+                  <p>ระบบรองรับไฟล์ <strong>.csv</strong> และ <strong>.xlsx</strong> โดยระบบจะดึงคะแนนจากคอลัมน์ที่ชื่อว่า <code>score</code>, <code>total</code> หรือ <code>คะแนน</code> หากไม่มีคอลัมน์ชื่อเหล่านี้ ระบบจะใช้คอลัมน์ที่เป็นตัวเลขคอลัมน์สุดท้ายแทน</p>
+                  <p><strong>ตัวอย่างโครงสร้างข้อมูล:</strong></p>
+                  <table class="example-table">
+                    <thead>
+                      <tr><th>student_id</th><th>name</th><th>score</th></tr>
+                    </thead>
+                    <tbody>
+                      <tr><td>640101</td><td>สมชาย ใจดี</td><td>85.5</td></tr>
+                      <tr><td>640102</td><td>สมหญิง สวยงาม</td><td>92.0</td></tr>
+                      <tr><td>640103</td><td>สมหมาย ตั้งใจ</td><td>74.0</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </details>
+
+              <div class="file-drop-area" id="fileDropArea">
+                <span class="file-msg">คลิกเพื่อเลือกไฟล์ หรือ ลากและวางไฟล์ที่นี่</span>
+                <input type="file" id="fileUpload" accept=".csv, .xlsx, .xls" required />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="labelsInput">ระดับเกรด (คั่นด้วยเครื่องหมายจุลภาค ,)</label>
+              <input type="text" id="labelsInput" value="A, B+, B, C+, C, D+, D, F" required />
+            </div>
+
+            <button type="submit" class="btn-primary" id="submitBtn">
+              <span class="btn-text">เริ่มคำนวณ</span>
+              <div class="loader hidden"></div>
+            </button>
+          </form>
+          
+          <div id="errorMsg" class="error-message hidden"></div>
+        </div>
+
+        <!-- Results Section (Hidden by default) -->
+        <div class="card result-section hidden" id="resultSection">
+          <div class="result-header">
+            <div>
+              <h2>ผลลัพธ์การตัดเกรด</h2>
+              <div class="method-badge" id="methodBadge">อัลกอริทึม</div>
+            </div>
+            <button class="btn-icon" id="resetBtn" aria-label="Reset">เริ่มต้นใหม่</button>
+          </div>
+          
+          <div class="score-display">
+            <div class="score-main">
+              <span class="score-label">ค่า Ω′ ที่ดีที่สุด (Omega Prime)</span>
+              <span class="score-value" id="omegaPrimeVal">0.0000</span>
+            </div>
+            <div class="score-details">
+              <div title="วัดความสำเร็จในการจัดสรรเกรดให้ครบทุกป้าย"><span>Ω1 (การจัดสรร):</span> <span id="omega1Val">0</span></div>
+              <div title="วัดการขยายระยะห่างระหว่างกลุ่มให้มากที่สุด"><span>Ω2 (ระยะห่าง):</span> <span id="omega2Val">0</span></div>
+              <div title="วัดความเท่าเทียมกันของความกว้างแต่ละกลุ่ม"><span>Ω3 (ความแปรปรวน):</span> <span id="omega3Val">0</span></div>
+            </div>
+          </div>
+
+          <div class="methods-container">
+            <h3>สรุปผลการประเมินจากทุกอัลกอริทึม</h3>
+            <div id="methodScoresList" style="display: flex; flex-direction: column; gap: 8px;">
+              <!-- Injected via JS -->
+            </div>
+          </div>
+
+          <div class="tabs-container">
+            <div class="tabs">
+              <button class="tab-btn active" data-target="tab-overall">ภาพรวม (Overall)</button>
+              <button class="tab-btn" data-target="tab-all-records">ข้อมูลทั้งหมด (All Records)</button>
+            </div>
+            
+            <div class="tab-content active" id="tab-overall">
+              <div class="table-container">
+                <table class="modern-table">
+                  <thead>
+                    <tr>
+                      <th>เกรด</th>
+                      <th>คะแนนต่ำสุด</th>
+                      <th>คะแนนสูงสุด</th>
+                      <th>จำนวน (Amount)</th>
+                    </tr>
+                  </thead>
+                  <tbody id="clustersBody">
+                    <!-- Rows injected via JS -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="tab-content" id="tab-all-records">
+              <div class="table-container" style="max-height: 400px; overflow-y: auto;">
+                <table class="modern-table">
+                  <thead>
+                    <tr>
+                      <th>ลำดับ</th>
+                      <th>คะแนน</th>
+                      <th>เกรดที่ได้</th>
+                    </tr>
+                  </thead>
+                  <tbody id="allRecordsBody">
+                    <!-- Rows injected via JS -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+          <div class="meta-info">จำนวนข้อมูลทั้งหมด: <span id="totalRecords"></span> รายการ</div>
+        </div>
+      </div>
+    </div>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

@@ -91,3 +91,14 @@ DP ที่รับประกัน optimal 1-D k-means (objective = withins
 - [x] Verify exhaustive ≥ DP — PASS
 - [ ] เข้าถึงข้อมูลจริง (WGP.csv) แล้วรันจริง
 - [ ] ยืนยัน k policy (fix |L| vs sweep) กับผู้ใช้
+
+## 7. Tech Stack & UI Design (Web Application)
+- **Architecture**: แยก 2 Services รันด้วย `docker-compose up -d --build` (Port 8000: Backend, Port 5173: Frontend)
+- **Backend**: Python 3.11 (FastAPI, Uvicorn) + Pandas สำหรับประมวลผลข้อมูล
+- **Frontend**: Vite + TypeScript (Vanilla, ไม่ใช้ Framework เพื่อความรวดเร็วและเบา)
+- **UI Design Style**: 
+  - **Modern Formal / Corporate Data Tool (ยุค 2019-2020s)**
+  - พื้นหลังสีขาว/เทาอ่อน (`#f4f7f6`, `#ffffff`) ขอบเส้นเรียบง่าย (Solid Borders), ใช้เงาบางเบา (Subtle 1px Box-Shadow)
+  - โทนสีเน้นความน่าเชื่อถือ: อักษรสีดำ/เทาเข้ม, สีไฮไลต์/ปุ่มกดใช้ "Corporate Blue" (`#0f62fe`)
+  - **No AI Slop**: ไม่มีเอฟเฟกต์ Glassmorphism, ไม่มี Gradient ฉูดฉาด, ไม่มีขอบมนเกินจำเป็น (ใช้ 4px border-radius)
+  - ภาษาไทยทั้งระบบ (รองรับการใช้งานจริงในบริบทการศึกษา/องค์กรไทย)
