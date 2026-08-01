@@ -26,9 +26,11 @@ worked examples, because the typeset Eq. 2 is ambiguous after PDF extraction):
 
   Ω′ = Ω1 · Ω2 · Ω3
 
-  Ω1 = θ / Θ                         if Θ ≥ 1   else 1     (clamped to [0,1])
+  Ω1 = 1 − |Θ − θ| / Θ               if Θ ≥ 1   else 1     (clamped to [0,1])
        θ = number of UNASSIGNED PRLs = |L| − N
        Θ = number of gaps in {γu, δ1..δ_{N-1}, γl} that are ≥ the widest PVI
+       Θ is how many PRLs OUGHT to stay unassigned, so the penalty is
+       two-sided: θ < Θ and θ > Θ are both punished. NOT θ/Θ (see below).
 
   Ω2 = (Σδi − ΣD_min) / (ΣD_max − ΣD_min)   if N ≥ 3   else 1
        δi   = gap between clusters i and i+1  (min(cluster_i) − max(cluster_{i+1}))
@@ -136,11 +138,16 @@ def calculate_omega_prime(values_desc, cuts, num_labels, U, L, ddof=1,
                        for i in range(N - 1)], dtype=float)
     boundary_gaps = np.concatenate([[gamma_u], deltas, [gamma_l]])
 
-    # ---- Ω1 = θ/Θ ---------------------------------------------------------
+    # ---- Ω1 = 1 − |Θ−θ|/Θ -------------------------------------------------
+    # Θ is the number of PRLs that OUGHT to remain unassigned; θ is how many
+    # actually are. The penalty is two-sided: unassigning too FEW *or* too MANY
+    # both reduce Ω1. (Using θ/Θ is wrong — it only penalises one side and
+    # saturates at 1.0 for every θ ≥ Θ. Both forms agree when θ ≤ Θ, which is
+    # why the paper's Table 3 examples alone cannot tell them apart.)
     theta = num_labels - N                                   # unassigned PRLs
     Theta = int(np.sum(boundary_gaps >= widest_pvi))         # gaps ≥ widest PVI
     if Theta >= 1:
-        omega1 = theta / Theta
+        omega1 = 1.0 - abs(Theta - theta) / Theta
         omega1 = min(max(omega1, 0.0), 1.0)                  # range [0,1]
     else:
         omega1 = 1.0
@@ -325,6 +332,103 @@ def dp_best(values_desc, num_labels, U, L, k=None, k_min=2, k_max=None, ddof=1):
         if best is None or res.omega_prime > best.omega_prime:
             best = res
     return best, per_k
+
+
+# ===========================================================================
+# 2c) WGF-CPD — reduce-from-|L| search (paper's Algorithm 1)
+# ===========================================================================
+
+def _cuts_from_widest_gaps(values_desc, n_clusters):
+    """Cut at the (n_clusters − 1) widest gaps between adjacent values.
+
+    Ties are broken by preferring the earlier (higher-score) gap, matching the
+    paper's "if there are multiple identical widest gaps, the one leading to
+    more uniform PVIs" only loosely — exact tie-breaking is left to the caller.
+    """
+    v = np.asarray(values_desc, dtype=float)
+    n = len(v)
+    if n_clusters <= 1:
+        return ()
+    gaps = v[:-1] - v[1:]                       # gap before index i+1
+    # order by gap size desc, then by position asc for stable ties
+    idx = sorted(range(len(gaps)), key=lambda i: (-gaps[i], i))
+    chosen = sorted(i + 1 for i in idx[:n_clusters - 1])
+    return tuple(chosen)
+
+
+def wgf_reduce(values_desc, num_labels, U, L, ddof=1, max_iter=None):
+    """Faithful reduce-from-|L| CPD (paper's Algorithm 1, WGF-CPD).
+
+    Starts by assigning ALL |L| labels via the |L|−1 widest gaps, then—while
+    Requirement 1 is unmet (Θ ≥ 1)—sacrifices one label per iteration and
+    re-partitions into one fewer cluster. This is the loop the manual
+    spreadsheet performs; it never searches down to the degenerate N=2
+    optimum the way a free sweep over k does.
+
+    The loop RUNS UNTIL Θ = 0, i.e. until no gap still exceeds the widest PVI.
+    The returned result is that terminal Θ=0 state — Requirement 1 is a
+    constraint to satisfy, not a score to maximise, so we do NOT return the
+    iteration with the highest Ω′. (An earlier iteration may well score higher;
+    it is reported in `history` but is not the algorithm's answer.)
+
+    Which label is dropped: the label sitting immediately BELOW the qualifying
+    gap; if that gap is γl (below the lowest label), the lowest label is
+    dropped. Either way the surviving labels are the top-N symbols, so the
+    partition is fully described by N — but the dropped SYMBOL differs, which
+    matters for reporting.
+
+    Returns (final, history) where `final` is the Θ=0 result and history is the
+    list of CPDResult per iteration (index 0 = the initial |L|-label
+    assignment). If the loop exhausts max_iter with Θ still ≥ 1, Requirement 1
+    is only partially met (the paper allows this) and the last state is
+    returned.
+    """
+    v = np.asarray(values_desc, dtype=float)
+    n = len(v)
+    N = min(num_labels, n)
+    if max_iter is None:
+        max_iter = num_labels                    # Θ is bounded by N+1
+
+    history = []
+    for _ in range(max_iter + 1):
+        if N < 1:
+            break
+        cuts = _cuts_from_widest_gaps(v, N)
+        res = calculate_omega_prime(v, cuts, num_labels, U, L, ddof, True)
+        history.append(res)
+        # Requirement 1 satisfied once no gap still exceeds the widest PVI.
+        if res.Theta < 1:
+            break
+        N -= 1
+    return (history[-1] if history else None), history
+
+
+def dropped_label(values_desc, cuts, grade_symbols, U, L):
+    """Which grade symbol the qualifying gap says to sacrifice.
+
+    Returns the symbol sitting immediately below the widest qualifying gap,
+    or the lowest symbol when that gap is γl. Returns None if no gap qualifies.
+    """
+    v = np.asarray(values_desc, dtype=float)
+    clusters = _clusters_from_cuts(v, cuts)
+    N = len(clusters)
+    pvis = [hi - lo for (hi, lo, a, b) in clusters]
+    widest = max(pvis)
+
+    gamma_u = U - clusters[0][0]
+    gamma_l = clusters[-1][1] - L
+    deltas = [clusters[i][1] - clusters[i + 1][0] for i in range(N - 1)]
+
+    # candidates: (gap value, symbol below that gap)
+    syms = list(grade_symbols[:N])
+    cands = [(gamma_u, syms[0] if syms else None)]
+    cands += [(deltas[i], syms[i + 1]) for i in range(N - 1)]
+    cands += [(gamma_l, syms[-1] if syms else None)]   # γl → drop lowest
+
+    qualifying = [(g, s) for g, s in cands if g >= widest]
+    if not qualifying:
+        return None
+    return max(qualifying, key=lambda t: t[0])[1]
 
 
 # ===========================================================================

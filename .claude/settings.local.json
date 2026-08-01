@@ -1,7 +1,27 @@
 {
   "permissions": {
     "allow": [
-      "Bash(python:*)"
+      "Bash(python:*)",
+      "Bash(pip install *)",
+      "Bash(echo \"=== exit $? ===\")",
+      "Bash(python3 -c \"import pypdf; print\\('ok', pypdf.__version__\\)\")",
+      "Bash(python3 -c ' *)",
+      "Bash(python3 -c \"import openpyxl; print\\('ok', openpyxl.__version__\\)\")",
+      "Bash(rm -f x1.txt)",
+      "Bash(python3 -c \"import numpy; print\\('numpy', numpy.__version__\\)\")",
+      "Bash(docker --version)",
+      "Bash(docker run *)",
+      "Read(//c/Users/rtkmm/AppData/Local/Programs/Python//**)",
+      "Bash(ls /c/Python* -d)",
+      "Read(//c/ProgramData/anaconda3/**)",
+      "Read(//c/Users/rtkmm/anaconda3/**)",
+      "Read(//c/Users/rtkmm/AppData/Local/Microsoft/WindowsApps/**)",
+      "Bash(/c/Users/rtkmm/anaconda3/python.exe -c \"import numpy,pandas;print\\('anaconda numpy',numpy.__version__\\)\")",
+      "Bash(/c/Users/rtkmm/AppData/Local/Programs/Python/Python310/python.exe -c \"import numpy;print\\('py310 numpy',numpy.__version__\\)\")",
+      "Bash(/c/Users/rtkmm/anaconda3/python.exe test_omega1_and_wgf.py)",
+      "Bash(PYTHONIOENCODING=utf-8 /c/Users/rtkmm/anaconda3/python.exe test_omega1_and_wgf.py)",
+      "Bash(PYTHONIOENCODING=utf-8 /c/Users/rtkmm/anaconda3/python.exe -c ' *)",
+      "Bash(PYTHONIOENCODING=utf-8 /c/Users/rtkmm/anaconda3/python.exe run_cpd_omega_prime.py)"
     ],
     "deny": [],
     "ask": []
