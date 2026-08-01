@@ -3,154 +3,70 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ระบบตัดเกรดข้อมูล (CPD)</title>
+    <title>Optimal CPD using 1D-Kmeans with Dynamic Programming</title>
   </head>
   <body>
+    <svg class="icon-sprite" aria-hidden="true" focusable="false">
+      <symbol id="i-download" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M8 1.75v8.5" /><path d="M4.75 7 8 10.25 11.25 7" /><path d="M2.25 11.5v1.25a1.5 1.5 0 0 0 1.5 1.5h8.5a1.5 1.5 0 0 0 1.5-1.5V11.5" />
+      </symbol>
+      <symbol id="i-copy" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="5.75" y="5.75" width="8.5" height="8.5" rx="1.5" /><path d="M10.25 3.25v-.5a1 1 0 0 0-1-1h-6.5a1 1 0 0 0-1 1v6.5a1 1 0 0 0 1 1h.5" />
+      </symbol>
+      <symbol id="i-stop" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="8" cy="8" r="6.25" /><rect x="5.75" y="5.75" width="4.5" height="4.5" rx="0.75" />
+      </symbol>
+      <symbol id="i-retry" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M13.75 8a5.75 5.75 0 1 1-1.9-4.27" /><path d="M13.75 1.75v3.5h-3.5" />
+      </symbol>
+      <symbol id="i-alert" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M8 2.25 1.75 13.25h12.5L8 2.25Z" /><path d="M8 6.5v3" /><path d="M8 11.5h.01" />
+      </symbol>
+      <symbol id="i-info" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="8" cy="8" r="6.25" /><path d="M8 7.25v4" /><path d="M8 4.75h.01" />
+      </symbol>
+      <symbol id="i-gauge" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M2.25 12a5.75 5.75 0 1 1 11.5 0" /><path d="M8 12 10.75 7.5" />
+      </symbol>
+      <symbol id="i-upload" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 15V3" /><path d="m7.5 7.5 4.5-4.5 4.5 4.5" /><path d="M5 13.5v4A2.5 2.5 0 0 0 7.5 20h9a2.5 2.5 0 0 0 2.5-2.5v-4" />
+      </symbol>
+    </svg>
+
     <div id="app">
       <div class="glass-container">
         <!-- Input Section -->
         <div class="card input-section" id="inputSection">
-          <h1>โปรแกรมตัดเกรดข้อมูล</h1>
-          <p class="subtitle">อัปโหลดคะแนนเพื่อคำนวณการตัดเกรด (CPD) ที่ดีที่สุด</p>
-          
-          <div class="project-info-container" style="margin-bottom: 24px; background-color: #f8f9fa; border: 1px solid #e0e0e0; border-radius: 6px; overflow: hidden; font-size: 0.95em; color: #333;">
-            <div class="info-tabs" style="display: flex; border-bottom: 1px solid #e0e0e0; background-color: #ffffff;">
-              <button type="button" onclick="document.getElementById('info-about').style.visibility='visible'; document.getElementById('info-about').style.opacity='1'; document.getElementById('info-algo').style.visibility='hidden'; document.getElementById('info-algo').style.opacity='0'; this.style.borderBottom='2px solid #0f62fe'; this.style.color='#0f62fe'; this.nextElementSibling.style.borderBottom='2px solid transparent'; this.nextElementSibling.style.color='#666';" style="flex: 1; padding: 12px 16px; border: none; background: none; font-weight: 600; cursor: pointer; border-bottom: 2px solid #0f62fe; color: #0f62fe; transition: all 0.2s;">เกี่ยวกับโปรเจกต์</button>
-              <button type="button" onclick="document.getElementById('info-about').style.visibility='hidden'; document.getElementById('info-about').style.opacity='0'; document.getElementById('info-algo').style.visibility='visible'; document.getElementById('info-algo').style.opacity='1'; this.style.borderBottom='2px solid #0f62fe'; this.style.color='#0f62fe'; this.previousElementSibling.style.borderBottom='2px solid transparent'; this.previousElementSibling.style.color='#666';" style="flex: 1; padding: 12px 16px; border: none; background: none; font-weight: 600; cursor: pointer; border-bottom: 2px solid transparent; color: #666; transition: all 0.2s;">Algorithms</button>
-            </div>
-            
-            <div style="display: grid;">
-              <div id="info-about" style="grid-area: 1 / 1; padding: 20px; border-left: 4px solid #0f62fe; visibility: visible; opacity: 1; transition: opacity 0.2s ease; z-index: 1;">
-                <h3 style="margin-top: 0; color: #111; font-size: 1.1em; display: flex; align-items: center; gap: 8px;">
-                  <span style="background: #0f62fe; color: white; width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 0.8em;">1</span> 
-                  เป้าหมายหลักของโปรเจกต์
-                </h3>
-                <p style="margin-bottom: 20px; line-height: 1.6; color: #444;">เรากำลังพัฒนาอัลกอริทึมตัดเกรด (1-D Norm-referenced Discretization) เพื่อหาจุดตัดที่ทำให้การแบ่งกลุ่มมีความ <strong>"ยุติธรรมแบบมีเงื่อนไข" (Conditional Unbiasedness)</strong> สูงที่สุด โดยมุ่งหาจุดตัดที่ให้ค่าตัวชี้วัด <strong style="color: #0f62fe; background: #e0e8ff; padding: 2px 6px; border-radius: 4px;">&Omega;&prime; (Omega prime)</strong> สูงสุดแทนการลดความแปรปรวน (SSE) แบบดั้งเดิม</p>
-                
-                <h3 style="margin-top: 0; color: #111; font-size: 1.1em; display: flex; align-items: center; gap: 8px;">
-                  <span style="background: #0f62fe; color: white; width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 0.8em;">2</span> 
-                  องค์ประกอบของ &Omega;&prime; จากงานวิจัย
-                </h3>
-                <p style="margin-bottom: 12px; line-height: 1.5; color: #444;">อิงจากงานวิจัยปี 2025 (PeerJ CS) ตัวชี้วัด &Omega;&prime; ประกอบด้วย 3 องค์ประกอบหลักที่สะท้อนถึงความยุติธรรม:</p>
-                
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 12px;">
-                  <div style="background: #ffffff; border: 1px solid #e0e0e0; padding: 12px; border-radius: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.02);">
-                    <strong style="color: #0f62fe; display: block; margin-bottom: 4px; font-size: 0.95em;">🎯 &Omega;1: การจัดสรรเกรด</strong>
-                    <span style="font-size: 0.85em; color: #555; line-height: 1.4; display: block;">ยุติธรรมในการไม่ฝืนแจกเกรดบางช่วงคะแนน หากมีคะแนนที่ทิ้งห่างกันมากเกินไป</span>
-                  </div>
-                  <div style="background: #ffffff; border: 1px solid #e0e0e0; padding: 12px; border-radius: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.02);">
-                    <strong style="color: #0f62fe; display: block; margin-bottom: 4px; font-size: 0.95em;">📏 &Omega;2: ระยะห่างระหว่างเกรด</strong>
-                    <span style="font-size: 0.85em; color: #555; line-height: 1.4; display: block;">ขยายช่องว่าง (Gap) ระหว่างแต่ละช่วงเกรดให้กว้างที่สุด เพื่อลดความกำกวมของรอยต่อเกรด</span>
-                  </div>
-                  <div style="background: #ffffff; border: 1px solid #e0e0e0; padding: 12px; border-radius: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.02);">
-                    <strong style="color: #0f62fe; display: block; margin-bottom: 4px; font-size: 0.95em;">⚖️ &Omega;3: ความกว้างช่วงคะแนน</strong>
-                    <span style="font-size: 0.85em; color: #555; line-height: 1.4; display: block;">จัดสรรให้ช่วงคะแนน (PVI) ของเกรดแต่ละตัวมีความกว้างใกล้เคียงกันที่สุด ลดความเหลื่อมล้ำ</span>
-                  </div>
-                </div>
-              </div>
-              
-              <div id="info-algo" style="grid-area: 1 / 1; padding: 20px; border-left: 4px solid #0f62fe; visibility: hidden; opacity: 0; transition: opacity 0.2s ease; z-index: 2; max-height: 400px; overflow-y: auto;">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: stretch;">
-                  
-                  <!-- Left column: Original -->
-                  <div style="background: #ffffff; border: 1px solid #e0e0e0; border-radius: 8px; padding: 16px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); display: flex; flex-direction: column;">
-                    <h3 style="margin-top: 0; color: #555; font-size: 1em; border-bottom: 2px solid #eeeeee; padding-bottom: 10px; margin-bottom: 16px; display: flex; align-items: center; gap: 6px;">
-                      <span style="font-size: 1.2em;">🔄</span> อัลกอริทึมเดิม (Heuristic)
-                    </h3>
-                    
-                    <div style="margin-bottom: 16px;">
-                      <span style="background: #f4f4f4; border: 1px solid #ddd; padding: 2px 8px; border-radius: 4px; font-size: 0.8em; font-weight: 600; color: #555;">WGF-CPD (Widest-Gap-First)</span>
-                      <p style="font-size: 0.85em; color: #444; line-height: 1.5; margin: 8px 0 0 0;">หาช่องว่าง (Gap) ที่กว้างที่สุดแล้วใช้เป็นจุดตัดทันที ทำงานเร็วมาก <strong>แต่ข้อเสียคือ:</strong> อ่อนไหวต่อคะแนนที่โดดออกมา (Outlier) ทำให้เกรดรวนได้ง่าย</p>
-                      <div style="margin-top: 8px; font-size: 0.8em; background: #fafafa; padding: 8px; border-radius: 4px; border-left: 2px solid #ccc; color: #666; line-height: 1.4;">
-                        <strong>ตัวอย่าง:</strong> คะแนน <code>[100, 60, 58, 55]</code> ช่องว่างกว้างสุดคือ 40 (ระหว่าง 100 กับ 60) ระบบจะตัดกลุ่มที่ 100 ทันที ทำให้กลุ่มแรกมีแค่ <code>[100]</code> ส่วนอีกกลุ่มคือ <code>[60, 58, 55]</code>
-                      </div>
-                    </div>
-                    
-                    <div style="margin-bottom: 16px;">
-                      <span style="background: #f4f4f4; border: 1px solid #ddd; padding: 2px 8px; border-radius: 4px; font-size: 0.8em; font-weight: 600; color: #555;">PAM-CPD</span>
-                      <p style="font-size: 0.85em; color: #444; line-height: 1.5; margin: 8px 0 0 0;">ใช้วิธีจัดกลุ่มคล้าย K-means แต่ใช้คะแนนที่มีอยู่จริงมาเป็นศูนย์กลาง (Medoid) ทนทานต่อ Outlier ได้ดีกว่า WGF แต่ใช้ทรัพยากรคำนวณมหาศาลหากมีนักเรียนจำนวนมาก</p>
-                    </div>
-                    
-                    <div style="margin-top: auto; font-size: 0.85em; color: #da1e28; background: #fff1f1; padding: 10px; border-radius: 6px; border-left: 3px solid #da1e28;">
-                      <strong>ข้อจำกัด:</strong> วิธีเดิมเป็นเพียงการประมาณการ จึงไม่การันตีว่าจะได้ค่าความยุติธรรม (&Omega;&prime;) สูงที่สุดเสมอไป
-                    </div>
-                  </div>
-                
-                  <!-- Right column: Ours -->
-                  <div style="background: #f0f4ff; border: 1px solid #a6c8ff; border-radius: 8px; padding: 16px; box-shadow: 0 2px 4px rgba(15, 98, 254, 0.05); display: flex; flex-direction: column;">
-                    <h3 style="margin-top: 0; color: #0f62fe; font-size: 1em; border-bottom: 2px solid #c9deff; padding-bottom: 10px; margin-bottom: 16px; display: flex; align-items: center; gap: 6px;">
-                      <span style="font-size: 1.2em;">✨</span> อัลกอริทึมที่ดีที่สุด (โปรเจกต์เรา)
-                    </h3>
-                    
-                    <div style="margin-bottom: 16px;">
-                      <span style="background: #0f62fe; color: #fff; padding: 2px 8px; border-radius: 4px; font-size: 0.8em; font-weight: 600;">Exhaustive Search (Brute-force)</span>
-                      <p style="font-size: 0.85em; color: #333; line-height: 1.5; margin: 8px 0 0 0;">จำลองจุดตัดเกรดทุกความเป็นไปได้บนโลก <strong>รับประกันเจอจุดที่ดีที่สุด (Global Optimum) 100%</strong> แต่ใช้เวลาประมวลผลสูง จึงเหมาะใช้เป็นมาตรฐานเปรียบเทียบ (Benchmark)</p>
-                      <div style="margin-top: 8px; font-size: 0.8em; background: #e0e8ff; padding: 8px; border-radius: 4px; border-left: 2px solid #0f62fe; color: #333; line-height: 1.4;">
-                        <strong>ตัวอย่าง:</strong> มีนักเรียน 10 คน ตัด 3 เกรด ระบบจะลองขีดเส้นแบ่งสับเปลี่ยนครบทั้ง 36 แบบ (C(9,2)) คำนวณ &Omega;&prime; ทุกอันแล้วหาอันที่คะแนนสูงสุดออกมา
-                      </div>
-                    </div>
-                    
-                    <div style="margin-bottom: 16px;">
-                      <span style="background: #198038; color: #fff; padding: 2px 8px; border-radius: 4px; font-size: 0.8em; font-weight: 600;">DP-Based Search (แนะนำ)</span>
-                      <p style="font-size: 0.85em; color: #333; line-height: 1.5; margin: 8px 0 0 0;">ใช้สมการคณิตศาสตร์ <em>Dynamic Programming</em> วิ่งหาจุดที่เกิดความแปรปรวน (SSE) ต่ำสุดรวดเดียว (ด้วยสมการความซับซ้อน O(n&sup2;k)) แทนการสุ่มหาแบบเก่า แล้วนำชุดที่ได้มาคัดเลือกจุดที่ทำให้ &Omega;&prime; สูงสุดอีกที</p>
-                      <div style="margin-top: 8px; font-size: 0.8em; background: #defbe6; padding: 8px; border-radius: 4px; border-left: 2px solid #198038; color: #111; line-height: 1.4;">
-                        <strong>ผลลัพธ์:</strong> ทำงานเสร็จในเสี้ยววินาทีแม้ประมวลผลข้อมูลนักเรียนระดับพันคน และได้จุดตัดเกรดที่ยุติธรรมสูงเทียบเท่าแบบ Exhaustive
-                      </div>
-                    </div>
-                    
-                    <div style="margin-top: auto; font-size: 0.85em; color: #0f62fe; background: #ffffff; padding: 10px; border-radius: 6px; border-left: 3px solid #0f62fe; font-weight: 500;">
-                      🎯 ยกระดับความแม่นยำ การันตีผลลัพธ์การตัดเกรดที่มีความเป็นธรรมสูงที่สุดอย่างแท้จริง
-                    </div>
-                  </div>
-                </div>
+          <h1>Optimal CPD using 1D-Kmeans with Dynamic Programming</h1>
+          <p class="subtitle">อัปโหลดชุดคะแนน แล้วเปรียบเทียบทุกวิธีภายใต้จำนวนเกรดเดียวกัน</p>
 
-                <div style="margin-top: 24px; padding: 16px; background: #ffffff; border: 1px solid #e0e0e0; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-                  <h4 style="margin: 0 0 12px 0; color: #111; display: flex; align-items: center; gap: 8px; font-size: 1.05em;">
-                    <span style="font-size: 1.2em;">🔍</span> ภาพจำลอง: ทำไมเราถึงต้องใช้อัลกอริทึมใหม่?
-                  </h4>
-                  <p style="font-size: 0.85em; color: #555; margin-bottom: 16px; line-height: 1.5; border-bottom: 1px dashed #e0e0e0; padding-bottom: 12px;">
-                    <strong>สถานการณ์:</strong> มีนักเรียนเกาะกลุ่มกันที่ 70-80 เยอะมาก แต่มีเด็กเทพ 1 คนได้ 100 และเด็กหลังห้อง 1 คนได้ 20 (ต้องการตัด 3 เกรด A, B, C)
-                  </p>
-                  
-                  <div style="display: flex; gap: 16px; flex-wrap: wrap;">
-                    <!-- Old Comparison -->
-                    <div style="flex: 1; min-width: 250px; padding: 16px; background: #f8f9fa; border-top: 3px solid #8d8d8d; border-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.02);">
-                      <strong style="color: #555; font-size: 0.9em; display: block; margin-bottom: 8px;">❌ อัลกอริทึมเก่า (มองแค่ช่องว่างกว้างสุด)</strong>
-                      <p style="font-size: 0.8em; color: #444; margin: 0 0 12px 0; line-height: 1.5;">
-                        ระบบจะเห็นว่า 100 กับ 80 และ 74 กับ 20 มีช่องว่างกว้างที่สุด มันเลยรีบสับเกรดตรงนั้นทันที
-                      </p>
-                      <div style="background: #ffffff; border: 1px solid #ddd; padding: 10px; border-radius: 4px; font-family: monospace; font-size: 0.8em; margin-bottom: 12px;">
-                        A: [100]<br>B: [80, 78, 77, 75, 74] <span style="color: #da1e28; font-weight: bold;">← กองรวมกันหมด!</span><br>C: [20]
-                      </div>
-                      <p style="font-size: 0.8em; color: #da1e28; margin: 0; line-height: 1.4; background: #fff1f1; padding: 6px; border-radius: 4px;">
-                        <strong>ผลลัพธ์:</strong> คนได้ 80 กับ 74 ความรู้ต่างกัน 6 แต้มแต่ได้ B เท่ากัน ไม่สะท้อนระดับความสามารถของเด็กส่วนใหญ่
-                      </p>
-                    </div>
-                    
-                    <!-- New Comparison -->
-                    <div style="flex: 1; min-width: 250px; padding: 16px; background: #f0f4ff; border-top: 3px solid #0f62fe; border-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.02);">
-                      <strong style="color: #0f62fe; font-size: 0.9em; display: block; margin-bottom: 8px;">✅ อัลกอริทึมเรา (มองความสมดุลด้วยคณิตศาสตร์)</strong>
-                      <p style="font-size: 0.8em; color: #444; margin: 0 0 12px 0; line-height: 1.5;">
-                        ระบบจำลองความแปรปรวนทั้งหมด และรู้ว่าการให้ B กระจุกตัวแบบนั้นค่า &Omega;&prime; จะตก จึงปรับจุดตัดใหม่ให้แฟร์ขึ้น
-                      </p>
-                      <div style="background: #ffffff; border: 1px solid #a6c8ff; padding: 10px; border-radius: 4px; font-family: monospace; font-size: 0.8em; margin-bottom: 12px;">
-                        A: [100, 80, 78] <span style="color: #198038; font-weight: bold;">← เกลี่ยให้สมดุล</span><br>B: [77, 75, 74]<br>C: [20]
-                      </div>
-                      <p style="font-size: 0.8em; color: #198038; margin: 0; line-height: 1.4; background: #defbe6; padding: 6px; border-radius: 4px;">
-                        <strong>ผลลัพธ์:</strong> เกรดถูกกระจายอย่างกลมกลืน ค่าความแปรปรวนต่ำลง ได้ &Omega;&prime; สูงสุด และเกรดสะท้อนความสามารถจริง
-                      </p>
-                    </div>
-                  </div>
-                </div>
+          <form id="cpdForm" class="calculation-form">
+            <div class="form-group upload-group">
+              <label class="upload-label" for="fileUpload">เลือกชุดข้อมูลเพื่อเริ่มต้น</label>
+              <p class="upload-intro" id="uploadIntro">ระบบจะตรวจหาคอลัมน์คะแนนและประเมินต้นทุนการคำนวณก่อนเริ่มรัน</p>
+
+              <div class="file-drop-area" id="fileDropArea" data-state="empty">
+                <svg class="upload-icon" aria-hidden="true"><use href="#i-upload" /></svg>
+                <span class="file-action" aria-live="polite">เลือกไฟล์คะแนน</span>
+                <span class="file-msg">หรือลากไฟล์มาวางที่นี่</span>
+                <span class="file-types" id="fileTypes">CSV · XLSX · XLS</span>
+                <input
+                  type="file"
+                  id="fileUpload"
+                  accept=".csv, .xlsx, .xls"
+                  required
+                  aria-describedby="uploadIntro fileTypes"
+                />
               </div>
             </div>
-          </div>
 
-          <form id="cpdForm">
-            <div class="form-group">
-              <label for="fileUpload">อัปโหลดชุดข้อมูล (รองรับไฟล์ CSV หรือ XLSX)</label>
-              
-              <details class="help-details">
+            <div class="run-setup hidden" id="runSetup">
+              <div class="setup-heading">
+                <h2>กำหนดจำนวนเกรด</h2>
+                <p>ตรวจสอบ |L| ก่อนให้ระบบเปรียบเทียบทุกวิธีด้วยงบ label เดียวกัน</p>
+              </div>
+
+              <details class="help-details upload-help">
                 <summary>ดูคำแนะนำรูปแบบไฟล์และตัวอย่าง</summary>
                 <div class="help-content">
                   <p>ระบบรองรับไฟล์ <strong>.csv</strong> และ <strong>.xlsx</strong> โดยระบบจะดึงคะแนนจากคอลัมน์ที่ชื่อว่า <code>score</code>, <code>total</code> หรือ <code>คะแนน</code> หากไม่มีคอลัมน์ชื่อเหล่านี้ ระบบจะใช้คอลัมน์ที่เป็นตัวเลขคอลัมน์สุดท้ายแทน</p>
@@ -168,55 +84,140 @@
                 </div>
               </details>
 
-              <div class="file-drop-area" id="fileDropArea">
-                <span class="file-msg">คลิกเพื่อเลือกไฟล์ หรือ ลากและวางไฟล์ที่นี่</span>
-                <input type="file" id="fileUpload" accept=".csv, .xlsx, .xls" required />
+              <div class="form-group">
+                <label for="labelsInput">ระดับเกรด (คั่นด้วยเครื่องหมายจุลภาค ,)</label>
+                <input
+                  type="text"
+                  id="labelsInput"
+                  value="A, B+, B, C+, C, D+, D, F"
+                  required
+                  autocomplete="off"
+                  spellcheck="false"
+                  aria-describedby="labelsHint"
+                />
+                <p class="field-hint" id="labelsHint">
+                  <span class="field-hint-metric">|L| = <strong id="labelBudget">8</strong> ระดับ</span>
+                  <span class="field-hint-note" id="labelsNote">จำนวนเกรดคงที่ ระบบจะไม่ลดให้เอง</span>
+                </p>
+                <p class="field-error hidden" id="labelsError" role="alert"></p>
+              </div>
+
+              <section class="preflight hidden" id="preflight" aria-live="polite">
+                <div class="preflight-head">
+                  <svg class="icon" aria-hidden="true"><use href="#i-gauge" /></svg>
+                  <h3>ตรวจสอบก่อนคำนวณ</h3>
+                  <span class="preflight-state" id="preflightState">กำลังอ่านไฟล์…</span>
+                </div>
+                <dl class="preflight-facts" id="preflightFacts"></dl>
+                <p class="preflight-cost hidden" id="preflightCost"></p>
+                <label class="preflight-confirm hidden" id="preflightConfirm">
+                  <input type="checkbox" id="forceExhaustive" />
+                  <span id="forceExhaustiveText"></span>
+                </label>
+                <ul class="notice-list" id="preflightNotices"></ul>
+              </section>
+
+              <div class="form-actions">
+                <button type="submit" class="btn-primary" id="submitBtn">
+                  <span class="btn-text">เริ่มคำนวณ</span>
+                  <div class="loader hidden"></div>
+                </button>
+                <button type="button" class="btn-danger hidden" id="cancelBtn">
+                  <svg class="icon" aria-hidden="true"><use href="#i-stop" /></svg>
+                  ยกเลิกการคำนวณ
+                </button>
               </div>
             </div>
-
-            <div class="form-group">
-              <label for="labelsInput">ระดับเกรด (คั่นด้วยเครื่องหมายจุลภาค ,)</label>
-              <input type="text" id="labelsInput" value="A, B+, B, C+, C, D+, D, F" required />
-            </div>
-
-            <button type="submit" class="btn-primary" id="submitBtn">
-              <span class="btn-text">เริ่มคำนวณ</span>
-              <div class="loader hidden"></div>
-            </button>
           </form>
-          
-          <div id="errorMsg" class="error-message hidden"></div>
+
+          <div id="errorMsg" class="error-message hidden" role="alert">
+            <svg class="icon" aria-hidden="true"><use href="#i-alert" /></svg>
+            <div class="error-body">
+              <p class="error-text" id="errorText"></p>
+              <button type="button" class="btn-ghost" id="retryBtn">
+                <svg class="icon" aria-hidden="true"><use href="#i-retry" /></svg>
+                ลองคำนวณอีกครั้ง
+              </button>
+            </div>
+          </div>
         </div>
 
         <!-- Results Section (Hidden by default) -->
         <div class="card result-section hidden" id="resultSection">
           <div class="result-header">
-            <div>
-              <h2>ผลลัพธ์การตัดเกรด</h2>
-              <div class="method-badge" id="methodBadge">อัลกอริทึม</div>
-            </div>
-            <button class="btn-icon" id="resetBtn" aria-label="Reset">เริ่มต้นใหม่</button>
-          </div>
-          
-          <div class="score-display">
-            <div class="score-main">
-              <span class="score-label">ค่า Ω′ ที่ดีที่สุด (Omega Prime)</span>
-              <span class="score-value" id="omegaPrimeVal">0.0000</span>
-            </div>
-            <div class="score-details">
-              <div title="วัดความสำเร็จในการจัดสรรเกรดให้ครบทุกป้าย"><span>Ω1 (การจัดสรร):</span> <span id="omega1Val">0</span></div>
-              <div title="วัดการขยายระยะห่างระหว่างกลุ่มให้มากที่สุด"><span>Ω2 (ระยะห่าง):</span> <span id="omega2Val">0</span></div>
-              <div title="วัดความเท่าเทียมกันของความกว้างแต่ละกลุ่ม"><span>Ω3 (ความแปรปรวน):</span> <span id="omega3Val">0</span></div>
-            </div>
-          </div>
-
-          <div class="methods-container">
-            <h3>สรุปผลการประเมินจากทุกอัลกอริทึม</h3>
-            <div id="methodScoresList" style="display: flex; flex-direction: column; gap: 8px;">
-              <!-- Injected via JS -->
+            <h2 id="resultHeading" tabindex="-1">ผลลัพธ์การตัดเกรด</h2>
+            <div class="result-actions">
+              <button type="button" class="btn-icon" id="exportXlsxBtn">
+                <svg class="icon" aria-hidden="true"><use href="#i-download" /></svg>
+                .xlsx
+              </button>
+              <button type="button" class="btn-icon" id="exportCsvBtn">
+                <svg class="icon" aria-hidden="true"><use href="#i-download" /></svg>
+                .csv
+              </button>
+              <button type="button" class="btn-icon" id="copyBtn">
+                <svg class="icon" aria-hidden="true"><use href="#i-copy" /></svg>
+                คัดลอกตาราง
+              </button>
+              <button type="button" class="btn-icon" id="resetBtn">ปรับค่าแล้วรันใหม่</button>
             </div>
           </div>
 
+          <p class="export-status hidden" id="exportStatus" role="status"></p>
+
+          <ul class="notice-list" id="resultNotices"></ul>
+
+          <!-- Zone A — the verdict. Ω′ means nothing alone; the ranking is the
+               product, so it leads and the winner's number hangs off it. -->
+          <section class="methods-container" aria-labelledby="methodsHeading">
+            <div class="section-head">
+              <h3 id="methodsHeading">อันดับอัลกอริทึมในรอบนี้</h3>
+              <p class="methods-subnote" id="methodsSubnote"></p>
+            </div>
+
+            <table class="method-table">
+              <thead>
+                <tr>
+                  <th scope="col" class="col-rank">#</th>
+                  <th scope="col" class="col-name">วิธี</th>
+                  <th scope="col" class="col-omega" aria-sort="descending">Ω′</th>
+                  <th scope="col" class="col-delta">Δ จากที่ดีที่สุด</th>
+                  <th scope="col" class="col-bar">สัดส่วน</th>
+                  <th scope="col" class="col-trace"><span class="visually-hidden">การคำนวณ</span></th>
+                </tr>
+              </thead>
+              <tbody id="methodScoresList"></tbody>
+            </table>
+
+            <p class="method-note hidden" id="methodTableNote"></p>
+
+            <div class="score-display">
+              <div class="score-main">
+                <span class="score-label">Ω′ ของวิธีที่ชนะ</span>
+                <span class="score-value" id="omegaPrimeVal">0.0000</span>
+                <span class="method-badge" id="methodBadge">อัลกอริทึม</span>
+              </div>
+              <div class="score-factors" id="scoreFactors">
+                <span class="score-eq" aria-hidden="true">=</span>
+                <div class="factor" id="factor1">
+                  <span class="factor-name">Ω1 การจัดสรร</span>
+                  <span class="factor-value" id="omega1Val">0.0000</span>
+                </div>
+                <span class="score-op" aria-hidden="true">×</span>
+                <div class="factor" id="factor2">
+                  <span class="factor-name">Ω2 ระยะห่าง</span>
+                  <span class="factor-value" id="omega2Val">0.0000</span>
+                </div>
+                <span class="score-op" aria-hidden="true">×</span>
+                <div class="factor" id="factor3">
+                  <span class="factor-name">Ω3 ความสม่ำเสมอ</span>
+                  <span class="factor-value" id="omega3Val">0.0000</span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Zone B — the evidence. -->
           <div class="tabs-container">
             <div class="tabs">
               <button class="tab-btn active" data-target="tab-overall">ภาพรวม (Overall)</button>
@@ -259,9 +260,68 @@
             </div>
           </div>
           <div class="meta-info">จำนวนข้อมูลทั้งหมด: <span id="totalRecords"></span> รายการ</div>
+
+          <!-- Zone C — provenance. Read once per session, so it sits last. -->
+          <section class="provenance" aria-labelledby="runContextHeading">
+            <h3 id="runContextHeading">รายละเอียดการรัน</h3>
+            <dl class="run-context" id="runContext"></dl>
+          </section>
         </div>
       </div>
     </div>
+
+    <button
+      type="button"
+      class="log-panel-toggle"
+      id="logPanelToggle"
+      aria-controls="executionLogPanel"
+      aria-expanded="false"
+    >
+      <span class="log-toggle-icon" aria-hidden="true">›_</span>
+      <span>Execution log</span>
+      <span class="log-count" id="logCount">0</span>
+    </button>
+
+    <aside
+      class="execution-log-panel"
+      id="executionLogPanel"
+      aria-label="Calculation execution log"
+      aria-hidden="true"
+    >
+      <header class="log-panel-header">
+        <div class="log-panel-heading">
+          <span class="log-terminal-icon" aria-hidden="true">›_</span>
+          <div>
+            <h2>Execution flow</h2>
+            <p>ขั้นตอนการประมวลผลแบบเรียลไทม์</p>
+          </div>
+        </div>
+        <button type="button" class="log-close-button" id="logPanelClose" aria-label="ปิด execution log">×</button>
+      </header>
+
+      <div class="log-toolbar">
+        <div class="log-run-status" id="logRunStatus" data-status="idle" role="status" aria-live="polite">
+          <span class="log-status-dot" aria-hidden="true"></span>
+          <span id="logStatusText">พร้อมเริ่มทำงาน</span>
+        </div>
+        <button type="button" class="log-clear-button" id="logClearButton">ล้าง log</button>
+      </div>
+
+      <div class="log-panel-body" id="logPanelBody">
+        <div class="log-empty-state" id="logEmptyState">
+          <span aria-hidden="true">{ }</span>
+          <strong>ยังไม่มี execution log</strong>
+          <p>เมื่อเริ่มคำนวณ ระบบจะแสดงการอ่านไฟล์ การเลือกข้อมูล และผลของแต่ละอัลกอริทึมที่นี่</p>
+        </div>
+        <ol class="log-timeline" id="logTimeline" aria-live="polite"></ol>
+      </div>
+
+      <footer class="log-panel-footer">
+        <span>CPD service trace</span>
+        <span id="logElapsed">0.0 ms</span>
+      </footer>
+    </aside>
+
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

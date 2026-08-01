@@ -63,6 +63,16 @@ import numpy as np
 # Core data structures
 # ===========================================================================
 
+class SearchCancelled(Exception):
+    """Raised when a `monitor` callback aborts an in-progress search."""
+
+
+# How often `exhaustive_best_for_k` calls its monitor. Small enough that an
+# abort lands within a few milliseconds, large enough that the callback cost
+# stays under a rounding error of the search itself.
+MONITOR_INTERVAL = 8192
+
+
 @dataclass
 class CPDResult:
     """Outcome of one partition, with its Ω′ decomposition."""
@@ -175,18 +185,32 @@ def calculate_omega_prime(values_desc, cuts, num_labels, U, L, ddof=1,
 # 2a) EXHAUSTIVE optimal-Ω′ search
 # ===========================================================================
 
-def exhaustive_best_for_k(values_desc, k, num_labels, U, L, ddof=1):
-    """Best Ω′ partition into exactly k contiguous clusters (brute force)."""
+def exhaustive_best_for_k(values_desc, k, num_labels, U, L, ddof=1, monitor=None):
+    """Best Ω′ partition into exactly k contiguous clusters (brute force).
+
+    Parameters
+    ----------
+    monitor : callable(examined: int) -> bool, optional
+        Called every MONITOR_INTERVAL candidates with the running count. Return
+        False to abort; the search then raises SearchCancelled instead of
+        returning. Lets a caller running this in a worker thread stop it
+        promptly rather than orphaning a CPU-bound thread it can no longer use.
+    """
     n = len(values_desc)
     if k < 1 or k > n:
         return None
     if k == 1:
         return calculate_omega_prime(values_desc, (), num_labels, U, L, ddof, True)
     best = None
+    examined = 0
     for cuts in combinations(range(1, n), k - 1):   # C(n-1, k-1)
         res = calculate_omega_prime(values_desc, cuts, num_labels, U, L, ddof, True)
         if best is None or res.omega_prime > best.omega_prime:
             best = res
+        examined += 1
+        if monitor is not None and examined % MONITOR_INTERVAL == 0:
+            if not monitor(examined):
+                raise SearchCancelled(f"exhaustive search aborted after {examined:,} candidates")
     return best
 
 
